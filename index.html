@@ -7,9 +7,22 @@
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <h1>Juego de Meteoritos</h1>
-  <canvas id="gameCanvas" width="480" height="600"></canvas>
-  <p>Estructura HTML y canvas base</p>
+  <div id="titulo">Meteoritos</div>
+  <div id="info">CSS y diseño visual</div>
+
+  <div id="hud">
+    <div>Puntos: <span>0</span></div>
+    <div>Nivel: <span>1</span></div>
+    <div>Vidas: <span>❤️ ❤️ ❤️</span></div>
+  </div>
+
+  <div id="gameContainer">
+    <canvas id="gameCanvas" width="480" height="600"></canvas>
+  </div>
+
+  <div id="controles">
+    <b>← →</b> Mover &nbsp;|&nbsp; <b>Espacio</b> Disparar &nbsp;|&nbsp; <b>P</b> Pausa
+  </div>
 
   <script src="game.js"></script>
 </body>
