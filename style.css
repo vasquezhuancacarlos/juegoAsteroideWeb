@@ -13,22 +13,15 @@ body {
   min-height: 100vh;
   font-family: 'Courier New', monospace;
   color: white;
+  user-select: none;
 }
 
 #titulo {
-  font-size: 28px;
+  font-size: 26px;
   color: #00ffff;
+  letter-spacing: 5px;
   text-transform: uppercase;
-  letter-spacing: 4px;
   margin-bottom: 6px;
-  text-shadow: 0 0 10px #00ffff;
-}
-
-#info {
-  color: #888;
-  font-size: 12px;
-  margin-bottom: 12px;
-  letter-spacing: 2px;
 }
 
 #hud {
@@ -38,34 +31,36 @@ body {
   width: 480px;
   padding: 6px 8px;
   font-size: 13px;
-  color: #aaa;
+  color: #888;
   letter-spacing: 1px;
 }
 
-#hud span {
+#hud .val {
   color: #00ffff;
   font-weight: bold;
 }
 
-#gameContainer {
-  position: relative;
-}
-
 canvas {
   display: block;
-  border: 1px solid rgba(0, 255, 255, 0.27);
-  background: #000010;
-  box-shadow: 0 0 30px rgba(0, 255, 255, 0.13);
+  border: 1px solid rgba(0, 255, 255, 0.2);
+  box-shadow: 0 0 20px rgba(0, 255, 255, 0.07);
 }
 
 #controles {
-  margin-top: 10px;
+  margin-top: 8px;
   font-size: 11px;
-  color: #555;
+  color: #444;
   letter-spacing: 1px;
   text-align: center;
 }
 
 #controles b {
-  color: #777;
+  color: #666;
+}
+
+#commit-label {
+  margin-top: 5px;
+  font-size: 10px;
+  color: #223;
+  letter-spacing: 1px;
 }

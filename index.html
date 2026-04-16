@@ -7,22 +7,20 @@
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <div id="titulo">Meteoritos</div>
-  <div id="info">CSS y diseño visual</div>
-
+  <div id="titulo">☄️ Meteoritos</div>  
   <div id="hud">
-    <div>Puntos: <span>0</span></div>
-    <div>Nivel: <span>1</span></div>
-    <div>Vidas: <span>❤️ ❤️ ❤️</span></div>
+    <div>Puntos: <span class="val" id="h-score">0</span></div>
+    <div>Nivel: <span class="val" id="h-level">1</span></div>
+    <div>Récord: <span class="val" id="h-best">0</span></div>
+    <div id="h-lives">❤️ ❤️ ❤️</div>
   </div>
 
-  <div id="gameContainer">
-    <canvas id="gameCanvas" width="480" height="600"></canvas>
-  </div>
+  <canvas id="gameCanvas" width="480" height="600"></canvas>
 
   <div id="controles">
-    <b>← →</b> Mover &nbsp;|&nbsp; <b>Espacio</b> Disparar &nbsp;|&nbsp; <b>P</b> Pausa
+    <b>↑ ↓ ← →</b> Mover &nbsp;|&nbsp; <b>Espacio</b> Disparar &nbsp;|&nbsp; <b>P</b> Pausa
   </div>
+  <div id="commit-label">Semana 7 — Nave con movimiento libre en 4 direcciones</div>
 
   <script src="game.js"></script>
 </body>
