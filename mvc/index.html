@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Meteoritos — MVC</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <div id="titulo">☄️ Meteoritos</div>
+
+  <!-- HUD: muestra los datos del MODELO -->
+  <div id="hud">
+    <div>Puntos: <span class="val" id="h-score">0</span></div>
+    <div>Nivel:  <span class="val" id="h-level">1</span></div>
+    <div>Récord: <span class="val" id="h-best">0</span></div>
+    <div id="h-lives">❤️ ❤️ ❤️</div>
+  </div>
+
+  <!-- Canvas: la VISTA dibuja aquí -->
+  <canvas id="gameCanvas" width="480" height="600"></canvas>
+
+  <div id="controles">
+    <b>↑ ↓ ← →</b> Mover &nbsp;|&nbsp;
+    <b>Espacio</b> Disparar &nbsp;|&nbsp;
+    <b>P</b> Pausa
+  </div>
+
+  <!--
+    ORDEN DE CARGA:
+    1. Modelos  (datos)
+    2. Vistas   (dibujo)
+    3. Controladores (lógica)
+  -->
+
+  <!-- MODELO -->
+  <script src="modelo/Nave.js"></script>
+  <script src="modelo/Meteorito.js"></script>
+  <script src="modelo/Bala.js"></script>
+  <script src="modelo/Particula.js"></script>
+  <script src="modelo/Estrella.js"></script>
+  <script src="modelo/EstadoJuego.js"></script>
+
+  <!-- VISTA -->
+  <script src="vista/VistaHUD.js"></script>
+  <script src="vista/VistaEstrellas.js"></script>
+  <script src="vista/VistaNave.js"></script>
+  <script src="vista/VistaMeteoritos.js"></script>
+  <script src="vista/VistaBalas.js"></script>
+  <script src="vista/VistaParticulas.js"></script>
+  <script src="vista/VistaPantallas.js"></script>
+
+  <!-- CONTROLADOR -->
+  <script src="controlador/ControladorTeclado.js"></script>
+  <script src="controlador/ControladorNave.js"></script>
+  <script src="controlador/ControladorMeteoritos.js"></script>
+  <script src="controlador/ControladorColisiones.js"></script>
+  <script src="controlador/ControladorJuego.js"></script>
+
+</body>
+</html>
