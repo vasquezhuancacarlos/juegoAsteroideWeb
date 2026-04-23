@@ -10,8 +10,8 @@ var ModeloEstrellas = {
         x:    Math.random() * canvasW,
         y:    Math.random() * canvasH,
         r:    Math.random() * 1.4,
-        a:    0.15 + Math.random() * 0.85, // opacidad
-        capa: Math.random()                // 0=lenta/fondo, 1=rápida/frente
+        a:    0.15 + Math.random() * 0.85, 
+        capa: Math.random()                
       });
     }
   }

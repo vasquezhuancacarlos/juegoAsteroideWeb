@@ -12,8 +12,8 @@ var ModeloParticulas = {
         y:     y,
         vx:    Math.cos(angulo) * speed,
         vy:    Math.sin(angulo) * speed,
-        life:  1.0,                        // vida de 1.0 a 0.0
-        decay: 0.03 + Math.random() * 0.04,// cuánto baja life por frame
+        life:  1.0,                        
+        decay: 0.03 + Math.random() * 0.04,
         r:     1.5 + Math.random() * 3,
         color: color
       });

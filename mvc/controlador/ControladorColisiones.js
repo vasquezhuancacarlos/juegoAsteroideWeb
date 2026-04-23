@@ -19,12 +19,12 @@ var ControladorColisiones = {
         var b = ModeloBalas.lista[j];
 
         if (this._dist(b, m) < m.r + 4) {
-          ModeloParticulas.explotar(m.x, m.y, m.color);           // explosión
-          EstadoJuego.sumarPuntos(Math.round(m.r) * EstadoJuego.nivel); // puntos
-          ModeloMeteoritos.eliminar(i);                            // borrar roca
-          ModeloBalas.eliminar(j);                                 // borrar bala
+          ModeloParticulas.explotar(m.x, m.y, m.color);         
+          EstadoJuego.sumarPuntos(Math.round(m.r) * EstadoJuego.nivel); 
+          ModeloMeteoritos.eliminar(i);                            
+          ModeloBalas.eliminar(j);                                
           VistaHUD.actualizar();
-          break; // el meteorito ya no existe, salir del bucle de balas
+          break; 
         }
       }
     }

@@ -4,21 +4,19 @@ var EstadoJuego = {
   puntos: 0,
   vidas:  3,
   nivel:  1,
-  record: 0,   // persiste entre partidas
-
-  // Estado de pantalla: 'intro' | 'jugando' | 'pausa' | 'golpe' | 'gameover'
+  record: 0,     
   estado: 'intro',
 
   // Temporizadores
   timerSpawn:   0,
-  spawnRate:    75,  // frames entre spawns (baja con el nivel)
+  spawnRate:    75, 
   timerNivel:   0,
-  invTimer:     0,   // frames de invulnerabilidad tras golpe
+  invTimer:     0, 
   timerDisparo: 0,
 
   // Constantes
-  DISPARO_CD:   12,  // cooldown entre disparos en frames
-  FRAMES_NIVEL: 900, // frames hasta subir de nivel (~15 seg a 60fps)
+  DISPARO_CD:   12, 
+  FRAMES_NIVEL: 900, 
 
   /** Reinicia la partida. El récord NO se reinicia */
   reiniciar: function() {
@@ -42,7 +40,7 @@ var EstadoJuego = {
   /** Resta una vida y activa invulnerabilidad */
   perderVida: function() {
     this.vidas--;
-    this.invTimer = 120; // ~2 segundos a 60fps
+    this.invTimer = 120; 
   },
 
   /** Sube el nivel y aumenta la dificultad */

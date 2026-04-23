@@ -10,11 +10,11 @@ var ControladorJuego = {
     this.canvas = document.getElementById('gameCanvas');
     this.ctx    = this.canvas.getContext('2d');
 
-    ControladorTeclado.iniciar();          // activar escucha del teclado
-    ModeloEstrellas.generar(this.W, this.H); // generar campo de estrellas
-    VistaHUD.actualizar();                 // mostrar HUD con valores iniciales
+    ControladorTeclado.iniciar();          
+    ModeloEstrellas.generar(this.W, this.H); 
+    VistaHUD.actualizar();                 
 
-    this._loop(); // arrancar el loop de animación
+    this._loop();
   },
 
   /** Reinicia todos los modelos y empieza una partida nueva */
@@ -39,10 +39,7 @@ var ControladorJuego = {
       ControladorColisiones.actualizar();
     }
 
-    // 2. DIBUJAR — siempre, en cualquier estado
     self._dibujar();
-
-    // 3. SIGUIENTE FRAME
     requestAnimationFrame(function() { self._loop(); });
   },
 
@@ -52,11 +49,8 @@ var ControladorJuego = {
     var W   = this.W;
     var H   = this.H;
 
-    // Fondo (limpiar canvas)
     ctx.fillStyle = '#000010';
     ctx.fillRect(0, 0, W, H);
-
-    // Estrellas (siempre visibles, incluso en intro)
     VistaEstrellas.dibujar(ctx);
 
     // Elementos del juego (solo con partida activa)
