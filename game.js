@@ -1,276 +1,301 @@
-const canvas  = document.getElementById('gameCanvas'); // Canvas donde se renderiza el juego
-const ctx     = canvas.getContext('2d');               // Contexto 2D para dibujar
-const W       = canvas.width;                          // Ancho y Alto del canvas
-const H       = canvas.height;                        
+const canvas  = document.getElementById('gameCanvas');
+const ctx     = canvas.getContext('2d');
+const W       = canvas.width;
+const H       = canvas.height;
 
-//  Referencias HUD
-const elScore = document.getElementById('h-score'); // Texto de puntaje
-const elLevel = document.getElementById('h-level'); // Texto de nivel
-const elBest  = document.getElementById('h-best');  // Texto de récord
-const elLives = document.getElementById('h-lives'); // Texto de vidas
+// Referencias HUD
+const elScore = document.getElementById('h-score');
+const elLevel = document.getElementById('h-level');
+const elBest  = document.getElementById('h-best');
+const elLives = document.getElementById('h-lives');
 
-// Estado global 
-let puntos, vidas, nivel, record; // Variables principales del juego
-let estado;                       // Estado actual del juego
-let invTimer;                     // Tiempo de invulnerabilidad tras golpe
-let timerSpawn, spawnRate, timerNivel; // Control de generación y dificultad
-let timerDisparo = 0;             // Control de disparo (cooldown)
+// Estado global
+let puntos, vidas, nivel, record;
+let estado;
+let invTimer;
+let timerSpawn, spawnRate, timerNivel;
+let timerDisparo = 0;
 
-// Colecciones 
-let nave, balas, meteoritos, particulas, stars; // Objetos del juego
+// Colecciones
+let nave, balas, meteoritos, particulas, stars;
 
-const COLORES_METEOR = ['#a0522d', '#8b4513', '#cd853f', '#d2691e']; // Colores meteoritos
+const COLORES_METEOR = ['#a0522d', '#8b4513', '#cd853f', '#d2691e', '#b8860b'];
 
-// Teclado 
-const teclas = {}; // Guarda el estado de cada tecla
+//Teclado
+const teclas = {};
 
 document.addEventListener('keydown', function(e) {
-  teclas[e.key] = true; 
-  if (e.key === ' ') e.preventDefault(); // Evita scroll con espacio
+  teclas[e.key] = true;
+  if (e.key === ' ') e.preventDefault();
 
-  // Cambia entre pausa y juego
   if ((e.key === 'p' || e.key === 'P') && estado === 'jugando') estado = 'pausa';
   else if ((e.key === 'p' || e.key === 'P') && estado === 'pausa') estado = 'jugando';
 
-  // Inicia o reinicia el juego
   if (e.key === 'Enter' && (estado === 'intro' || estado === 'gameover')) {
     iniciarJuego();
   }
 });
 
 document.addEventListener('keyup', function(e) {
-  teclas[e.key] = false; // Marca tecla liberada
+  teclas[e.key] = false;
 });
 
-//  Iniciar juego 
+// Iniciar juego
 function iniciarJuego() {
-  puntos       = 0;  // Reinicia puntaje
-  vidas        = 3;  
-  nivel        = 1;  
-  record       = record || 0; // Mantiene récord previo
+  puntos       = 0;
+  vidas        = 3;
+  nivel        = 1;
+  record       = record || 0;
   timerSpawn   = 0;
-  spawnRate    = 80; // Tiempo entre meteoritos
+  spawnRate    = 75;
   timerNivel   = 0;
   invTimer     = 0;
   timerDisparo = 0;
 
-  // Posición inicial de la nave en el centro
   nave = {
-    x:     W / 2,
-    y:     H / 2,
-    angulo: -Math.PI / 2  
+    x:      W / 2,
+    y:      H / 2,
+    angulo: -Math.PI / 2,   // apunta arriba
+    vx:     0,              // velocidad acumulada (inercia)
+    vy:     0
   };
 
-  balas      = []; // Limpia balas
-  meteoritos = []; // Limpia meteoritos
-  particulas = []; // Limpia partículas
+  balas      = [];
+  meteoritos = [];
+  particulas = [];
 
-  crearEstrellas(); // Genera fondo
-  actualizarHUD();  // Actualiza interfaz
-  estado = 'jugando'; // Cambia a estado activo
+  crearEstrellas();
+  actualizarHUD();
+  estado = 'jugando';
 }
 
-//  HUD 
+//HUD
 function actualizarHUD() {
-  // Muestra valores actuales en pantalla
   elScore.textContent = puntos;
   elLevel.textContent = nivel;
   elBest.textContent  = record;
   elLives.textContent = '❤️ '.repeat(vidas).trim() || '💀';
 }
 
-//  Estrellas
+// Estrellas con parallax 
 function crearEstrellas() {
   stars = [];
-  for (let i = 0; i < 140; i++) {
+  for (let i = 0; i < 150; i++) {
     stars.push({
       x:     Math.random() * W,
       y:     Math.random() * H,
-      r:     Math.random() * 1.3, // tamaño
-      a:     0.2 + Math.random() * 0.8, // transparencia
-      speed: 0.1 + Math.random() * 0.3 // velocidad de movimiento
+      r:     Math.random() * 1.4,
+      a:     0.15 + Math.random() * 0.85,
+      capa:  Math.random()   // 0 = lenta, 1 = rápida (para parallax)
     });
   }
 }
 
-// Crear meteorito
+// Crear meteorito desde cualquier borde 
 function crearMeteoritos() {
-  const r          = 10 + Math.random() * 24; // Tamaño aleatorio
-  const extraSpeed = (nivel - 1) * 0.4;       // Aumenta con nivel
+  const r          = 10 + Math.random() * 26;
+  const extraSpeed = (nivel - 1) * 0.35;
+  const velocidad  = 1.4 + Math.random() * 2 + extraSpeed;
+
+  // Elegir borde de aparición: 0=arriba, 1=abajo, 2=izquierda, 3=derecha
+  const borde = Math.floor(Math.random() * 4);
+  let mx, my;
+
+  if (borde === 0) { mx = r + Math.random() * (W - r * 2); my = -r; }
+  if (borde === 1) { mx = r + Math.random() * (W - r * 2); my = H + r; }
+  if (borde === 2) { mx = -r;     my = r + Math.random() * (H - r * 2); }
+  if (borde === 3) { mx = W + r;  my = r + Math.random() * (H - r * 2); }
+
+  // Dirección: apunta al centro con variación aleatoria
+  const destinoX = W / 2 + (Math.random() - 0.5) * W * 0.6;
+  const destinoY = H / 2 + (Math.random() - 0.5) * H * 0.6;
+  const angulo   = Math.atan2(destinoY - my, destinoX - mx) + (Math.random() - 0.5) * 0.8;
 
   meteoritos.push({
-    x:        r + Math.random() * (W - r * 2),
-    y:        -r, 
+    x:        mx,
+    y:        my,
     r:        r,
-    vx:       (Math.random() - 0.5) * 1.5, 
-    vy:       1.5 + Math.random() * 2 + extraSpeed, // Caída
+    vx:       Math.cos(angulo) * velocidad,
+    vy:       Math.sin(angulo) * velocidad,
     rot:      0,
-    rotSpeed: (Math.random() - 0.5) * 0.06,
+    rotSpeed: (Math.random() - 0.5) * 0.07,
     color:    COLORES_METEOR[Math.floor(Math.random() * COLORES_METEOR.length)]
   });
 }
 
-// Explosión
+//  Explotar
 function explotar(x, y, color, cantidad) {
-  cantidad = cantidad || 16;
-
-  // Genera partículas en círculo
+  cantidad = cantidad || 18;
   for (let i = 0; i < cantidad; i++) {
     const angulo = (i / cantidad) * Math.PI * 2;
-    const speed  = 1.5 + Math.random() * 3;
-
+    const speed  = 1.5 + Math.random() * 3.5;
     particulas.push({
       x:     x,
       y:     y,
       vx:    Math.cos(angulo) * speed,
       vy:    Math.sin(angulo) * speed,
       life:  1.0,
-      decay: 0.035 + Math.random() * 0.04,
-      r:     1.5 + Math.random() * 2.5,
+      decay: 0.03 + Math.random() * 0.04,
+      r:     1.5 + Math.random() * 3,
       color: color
     });
   }
 }
 
-// Calcula distancia entre dos objetos (colisiones)
 function distancia(a, b) {
   return Math.hypot(a.x - b.x, a.y - b.y);
 }
 
-// Actualizar
+// Actualizar 
 function actualizar() {
-  if (estado !== 'jugando') return; // Solo corre si se está jugando
+  if (estado !== 'jugando') return;
 
-  // Movimiento de la nave con flechas
-  if (teclas['ArrowLeft'])  { nave.x -= 5; nave.angulo = Math.PI; }
-  if (teclas['ArrowRight']) { nave.x += 5; nave.angulo = 0; }
-  if (teclas['ArrowUp'])    { nave.y -= 5; nave.angulo = -Math.PI / 2; }
-  if (teclas['ArrowDown'])  { nave.y += 5; nave.angulo =  Math.PI / 2; }
+  // Movimiento con INERCIA SUAVE 
+  const aceleracion = 0.9;
+  const friccion    = 0.82;
+  const maxSpeed    = 5;
 
-  // Limita la nave dentro del canvas
-  nave.x = Math.max(14, Math.min(W - 14, nave.x));
-  nave.y = Math.max(14, Math.min(H - 14, nave.y));
+  if (teclas['ArrowLeft'])  nave.vx -= aceleracion;
+  if (teclas['ArrowRight']) nave.vx += aceleracion;
+  if (teclas['ArrowUp'])    nave.vy -= aceleracion;
+  if (teclas['ArrowDown'])  nave.vy += aceleracion;
 
-  // Disparo con tiempo de espera
+  // Limitar velocidad máxima
+  const speed = Math.hypot(nave.vx, nave.vy);
+  if (speed > maxSpeed) {
+    nave.vx = (nave.vx / speed) * maxSpeed;
+    nave.vy = (nave.vy / speed) * maxSpeed;
+  }
+
+  // Aplicar fricción
+  nave.vx *= friccion;
+  nave.vy *= friccion;
+
+  nave.x += nave.vx;
+  nave.y += nave.vy;
+
+  // Rebotar en los bordes 
+  if (nave.x < 14)     { nave.x = 14;     nave.vx *= -0.5; }
+  if (nave.x > W - 14) { nave.x = W - 14; nave.vx *= -0.5; }
+  if (nave.y < 14)     { nave.y = 14;     nave.vy *= -0.5; }
+  if (nave.y > H - 14) { nave.y = H - 14; nave.vy *= -0.5; }
+
+  //  Rotación suave hacia la dirección de movimiento 
+  if (Math.hypot(nave.vx, nave.vy) > 0.3) {
+    const anguloDestino = Math.atan2(nave.vy, nave.vx);
+    let diff = anguloDestino - nave.angulo;
+    while (diff >  Math.PI) diff -= Math.PI * 2;
+    while (diff < -Math.PI) diff += Math.PI * 2;
+    nave.angulo += diff * 0.18;
+  }
+
+  // Disparar en la dirección que apunta la nave
   timerDisparo--;
   if (teclas[' '] && timerDisparo <= 0) {
     balas.push({
       x:  nave.x + Math.cos(nave.angulo) * 20,
       y:  nave.y + Math.sin(nave.angulo) * 20,
-      vx: Math.cos(nave.angulo) * 10,
-      vy: Math.sin(nave.angulo) * 10
+      vx: Math.cos(nave.angulo) * 11,
+      vy: Math.sin(nave.angulo) * 11
     });
     timerDisparo = 12;
   }
 
-  // Subida de nivel
+  // Nivel
   timerNivel++;
   if (timerNivel >= 900) {
     timerNivel = 0;
     nivel++;
-    spawnRate = Math.max(30, spawnRate - 8);
+    spawnRate = Math.max(28, spawnRate - 7);
     actualizarHUD();
   }
 
-  // Genera meteoritos
+  // Spawn
   timerSpawn++;
   if (timerSpawn >= spawnRate) {
     crearMeteoritos();
     timerSpawn = 0;
   }
 
-  // Movimiento de balas y eliminación fuera de pantalla
+  // Balas
   for (let i = balas.length - 1; i >= 0; i--) {
     balas[i].x += balas[i].vx;
     balas[i].y += balas[i].vy;
-
-    if (balas[i].x < -20 || balas[i].x > W + 20 ||
-        balas[i].y < -20 || balas[i].y > H + 20) {
+    if (balas[i].x < -30 || balas[i].x > W + 30 ||
+        balas[i].y < -30 || balas[i].y > H + 30) {
       balas.splice(i, 1);
     }
   }
 
-  // Movimiento de estrellas (efecto fondo)
+  // Estrellas con efecto parallax (se mueven al revés que la nave) 
   stars.forEach(function(s) {
-    s.y += s.speed;
-    if (s.y > H) s.y = 0;
+    s.x -= nave.vx * s.capa * 0.15;
+    s.y -= nave.vy * s.capa * 0.15;
+    if (s.x < 0) s.x += W;
+    if (s.x > W) s.x -= W;
+    if (s.y < 0) s.y += H;
+    if (s.y > H) s.y -= H;
   });
 
   if (invTimer > 0) invTimer--;
 
- 
- //  Meteoritos y colisiones
+  // Meteoritos
   for (let i = meteoritos.length - 1; i >= 0; i--) {
     const m = meteoritos[i];
-
-    // Movimiento del meteorito
     m.x   += m.vx;
     m.y   += m.vy;
-    m.rot += m.rotSpeed; // rotación visual
+    m.rot += m.rotSpeed;
 
-    // Elimina meteorito si sale completamente del canvas
-    if (m.y - m.r > H || m.x < -m.r * 2 || m.x > W + m.r * 2) {
+    // Eliminar si sale muy lejos del canvas (por cualquier lado)
+    if (m.x < -m.r * 3 || m.x > W + m.r * 3 ||
+        m.y < -m.r * 3 || m.y > H + m.r * 3) {
       meteoritos.splice(i, 1);
       continue;
     }
 
-    // Colisión bala ↔ meteorito 
+    // Colision bala ↔ meteorito
     let destruido = false;
-
     for (let j = balas.length - 1; j >= 0; j--) {
-      // Si la distancia es menor que el radio → colisión
       if (distancia(balas[j], m) < m.r + 4) {
-        explotar(m.x, m.y, m.color); // efecto visual
-
-        puntos += Math.round(m.r) * nivel; // suma puntos según tamaño
+        explotar(m.x, m.y, m.color);
+        puntos += Math.round(m.r) * nivel;
         if (puntos > record) record = puntos;
-
-        meteoritos.splice(i, 1); // elimina meteorito
-        balas.splice(j, 1);      // elimina bala
+        meteoritos.splice(i, 1);
+        balas.splice(j, 1);
         destruido = true;
-
-        actualizarHUD(); // refresca HUD
+        actualizarHUD();
         break;
       }
     }
-
     if (destruido) continue;
 
-    // ── Colisión nave ↔ meteorito ──
+    // Colision nave ↔ meteorito
     if (invTimer === 0 && distancia(m, nave) < m.r + 12) {
-      explotar(m.x, m.y, '#ff4400', 20); // explosión más grande
-
+      explotar(m.x, m.y, '#ff4400', 22);
       meteoritos.splice(i, 1);
       vidas--;
-      invTimer = 120; // activa invulnerabilidad temporal
-
+      invTimer = 120;
       actualizarHUD();
-
       if (vidas <= 0) {
-        estado = 'golpe'; // estado previo al gameover
+        estado = 'golpe';
         setTimeout(function() { estado = 'gameover'; }, 1500);
       }
       break;
     }
   }
 
-  //  Partículas (efectos de explosión)
+  // Particulas
   for (let i = particulas.length - 1; i >= 0; i--) {
     const p = particulas[i];
-
-    // Movimiento con ligera gravedad
     p.x    += p.vx;
     p.y    += p.vy;
-    p.vy   += 0.06;
-
-    p.life -= p.decay; // reduce vida
-
-    // Elimina cuando desaparece
+    p.vy   += 0.05;
+    p.life -= p.decay;
     if (p.life <= 0) particulas.splice(i, 1);
   }
 }
 
-//  Dibujos
+// Dibujos 
 function dibujarEstrellas() {
   stars.forEach(function(s) {
     ctx.beginPath();
@@ -281,25 +306,23 @@ function dibujarEstrellas() {
 }
 
 function dibujarNave() {
-  // Parpadeo cuando es invulnerable
   if (invTimer > 0 && Math.floor(invTimer / 6) % 2 === 0) return;
 
   ctx.save();
   ctx.translate(nave.x, nave.y);
-
-  // Rota la nave según dirección
   ctx.rotate(nave.angulo + Math.PI / 2);
 
-  // Motor (efecto de fuego)
-  ctx.fillStyle = 'hsl(' + (Math.random() * 20 + 10) + ', 100%, 60%)';
+  // Llamarada del motor
+  const largoLlama = 14 + Math.random() * 8;
+  ctx.fillStyle = 'hsl(' + (Math.random() * 20 + 10) + ', 100%, 55%)';
   ctx.beginPath();
   ctx.moveTo(-7, 8);
-  ctx.lineTo(0, 22 + Math.random() * 6);
+  ctx.lineTo(0, 8 + largoLlama);
   ctx.lineTo(7, 8);
   ctx.closePath();
   ctx.fill();
 
-  // Cuerpo de la nave
+  // Cuerpo
   ctx.fillStyle = '#00ccff';
   ctx.beginPath();
   ctx.moveTo(0, -18);
@@ -309,14 +332,31 @@ function dibujarNave() {
   ctx.closePath();
   ctx.fill();
 
-  // Núcleo central
-  ctx.fillStyle = '#e0f8ff';
+  // Borde brillante
+  ctx.strokeStyle = 'rgba(100, 220, 255, 0.5)';
+  ctx.lineWidth   = 1;
+  ctx.beginPath();
+  ctx.moveTo(0, -18);
+  ctx.lineTo(-14, 14);
+  ctx.lineTo(0, 6);
+  ctx.lineTo(14, 14);
+  ctx.closePath();
+  ctx.stroke();
+
+  // Núcleo
+  ctx.fillStyle = '#e8f8ff';
   ctx.beginPath();
   ctx.moveTo(0, -10);
   ctx.lineTo(-5, 5);
   ctx.lineTo(0, 1);
   ctx.lineTo(5, 5);
   ctx.closePath();
+  ctx.fill();
+
+  // Ventanilla (cabina)
+  ctx.beginPath();
+  ctx.arc(0, -5, 4, 0, Math.PI * 2);
+  ctx.fillStyle = 'rgba(0, 200, 255, 0.4)';
   ctx.fill();
 
   ctx.restore();
@@ -327,33 +367,44 @@ function dibujarMeteoritos(m) {
   ctx.translate(m.x, m.y);
   ctx.rotate(m.rot);
 
+  // Sombra
   ctx.beginPath();
-
-  // Forma irregular del meteorito
   for (let i = 0; i < 8; i++) {
     const angle  = (i / 8) * Math.PI * 2;
     const jitter = 0.72 + Math.sin(i * 3.7) * 0.28;
     const radio  = m.r * jitter;
-
-    if (i === 0)
-      ctx.moveTo(Math.cos(angle) * radio, Math.sin(angle) * radio);
-    else
-      ctx.lineTo(Math.cos(angle) * radio, Math.sin(angle) * radio);
+    if (i === 0) ctx.moveTo(Math.cos(angle) * radio + 2, Math.sin(angle) * radio + 2);
+    else         ctx.lineTo(Math.cos(angle) * radio + 2, Math.sin(angle) * radio + 2);
   }
+  ctx.closePath();
+  ctx.fillStyle = 'rgba(0, 0, 0, 0.25)';
+  ctx.fill();
 
+  // Roca principal
+  ctx.beginPath();
+  for (let i = 0; i < 8; i++) {
+    const angle  = (i / 8) * Math.PI * 2;
+    const jitter = 0.72 + Math.sin(i * 3.7) * 0.28;
+    const radio  = m.r * jitter;
+    if (i === 0) ctx.moveTo(Math.cos(angle) * radio, Math.sin(angle) * radio);
+    else         ctx.lineTo(Math.cos(angle) * radio, Math.sin(angle) * radio);
+  }
   ctx.closePath();
   ctx.fillStyle = m.color;
   ctx.fill();
-
-  // Borde tenue
-  ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
-  ctx.lineWidth = 1;
+  ctx.strokeStyle = 'rgba(255, 255, 255, 0.12)';
+  ctx.lineWidth   = 1;
   ctx.stroke();
 
-  // Sombra interna
+  // Cráteres
   ctx.beginPath();
   ctx.arc(-m.r * 0.22, -m.r * 0.18, m.r * 0.22, 0, Math.PI * 2);
-  ctx.fillStyle = 'rgba(0, 0, 0, 0.28)';
+  ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+  ctx.fill();
+
+  ctx.beginPath();
+  ctx.arc(m.r * 0.3, m.r * 0.25, m.r * 0.14, 0, Math.PI * 2);
+  ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
   ctx.fill();
 
   ctx.restore();
@@ -361,26 +412,32 @@ function dibujarMeteoritos(m) {
 
 function dibujarBalas() {
   balas.forEach(function(b) {
+    // Bala orientada en su dirección de vuelo
+    const anguloBala = Math.atan2(b.vy, b.vx);
+    ctx.save();
+    ctx.translate(b.x, b.y);
+    ctx.rotate(anguloBala);
     ctx.fillStyle   = '#ffff44';
-    ctx.shadowBlur  = 8;       // efecto glow
+    ctx.shadowBlur  = 8;
     ctx.shadowColor = '#ffff00';
-    ctx.fillRect(b.x - 1.5, b.y - 5, 3, 10);
+    ctx.fillRect(-5, -2, 10, 4);
     ctx.shadowBlur  = 0;
+    ctx.restore();
   });
 }
 
 function dibujarParticulas() {
   particulas.forEach(function(p) {
-    ctx.globalAlpha = p.life; // transparencia según vida
+    ctx.globalAlpha = p.life;
     ctx.beginPath();
     ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
     ctx.fillStyle = p.color;
     ctx.fill();
   });
-  ctx.globalAlpha = 1; // reset
+  ctx.globalAlpha = 1;
 }
 
-//  Overlays (pantallas) 
+// Overlays 
 function overlay(alpha) {
   ctx.fillStyle = 'rgba(0, 0, 0, ' + alpha + ')';
   ctx.fillRect(0, 0, W, H);
@@ -394,41 +451,39 @@ function texto(t, x, y, sz, color, alineacion) {
   ctx.fillText(t, x, y);
 }
 
-// Pantalla inicial
 function dibujarIntro() {
-  overlay(0.7);
-  texto('☄️  METEORITOS', W / 2, H / 2 - 90, 28, '#00ffff');
-  texto('Movimiento libre en 4 direcciones', W / 2, H / 2 - 40, 13, '#aaa');
-  texto('↑ ↓ ← →   Mover', W / 2, H / 2 - 10, 12, '#666');
-  texto('ESPACIO    Disparar', W / 2, H / 2 + 14, 12, '#666');
-  texto('P          Pausar', W / 2, H / 2 + 38, 12, '#666');
-  texto('[ ENTER para jugar ]', W / 2, H / 2 + 85, 16, '#00ff88');
+  overlay(0.72);
+  texto('☄️  METEORITOS',                        W / 2, H / 2 - 100, 28, '#00ffff');
+  texto('Movimiento libre — meteoritos por todos lados', W / 2, H / 2 - 55, 13, '#aaa');
+  texto('─────────────────────────',              W / 2, H / 2 - 28, 11, '#333');
+  texto('↑ ↓ ← →   Mover (con inercia)',          W / 2, H / 2 - 5,  12, '#666');
+  texto('ESPACIO    Disparar hacia donde apuntas', W / 2, H / 2 + 18, 12, '#666');
+  texto('P          Pausar',                      W / 2, H / 2 + 41, 12, '#666');
+  texto('─────────────────────────',              W / 2, H / 2 + 58, 11, '#333');
+  texto('[ ENTER para jugar ]',                   W / 2, H / 2 + 95, 16, '#00ff88');
 }
 
-// Pantalla pausa
 function dibujarPausa() {
   overlay(0.5);
-  texto('⏸  PAUSA', W / 2, H / 2 - 10, 28, '#ffff00');
+  texto('⏸  PAUSA',                 W / 2, H / 2 - 10, 28, '#ffff00');
   texto('Presiona P para continuar', W / 2, H / 2 + 30, 13, '#aaa');
 }
 
-// Golpe
 function dibujarGolpe() {
   overlay(0.5);
   texto('¡IMPACTO!', W / 2, H / 2, 32, '#ff6600');
 }
 
-// Game Over
 function dibujarGameOver() {
   overlay(0.75);
-  texto('GAME OVER', W / 2, H / 2 - 60, 34, '#ff3333');
-  texto('Puntuación: ' + puntos, W / 2, H / 2 - 10, 18, '#fff');
-  texto('Récord: ' + record, W / 2, H / 2 + 18, 15, '#00ffff');
-  texto('Nivel alcanzado: ' + nivel, W / 2, H / 2 + 44, 14, '#aaa');
-  texto('[ ENTER para reiniciar ]', W / 2, H / 2 + 90, 14, '#00ff88');
+  texto('GAME OVER',                  W / 2, H / 2 - 65, 34, '#ff3333');
+  texto('Puntuación: ' + puntos,      W / 2, H / 2 - 12, 18, '#fff');
+  texto('Récord: ' + record,          W / 2, H / 2 + 16, 15, '#00ffff');
+  texto('Nivel alcanzado: ' + nivel,  W / 2, H / 2 + 42, 14, '#aaa');
+  texto('[ ENTER para reiniciar ]',   W / 2, H / 2 + 90, 14, '#00ff88');
 }
 
-//  Render principal
+// ─── Dibujar 
 function dibujar() {
   ctx.fillStyle = '#000010';
   ctx.fillRect(0, 0, W, H);
@@ -442,22 +497,21 @@ function dibujar() {
     dibujarNave();
   }
 
-  // Estados del juego
   if (estado === 'intro')    dibujarIntro();
   if (estado === 'pausa')    dibujarPausa();
   if (estado === 'golpe')    dibujarGolpe();
   if (estado === 'gameover') dibujarGameOver();
 }
 
-// Loop
+// ─── Loop 
 function loop() {
-  actualizar(); // lógica del juego
-  dibujar();    
-  requestAnimationFrame(loop); 
+  actualizar();
+  dibujar();
+  requestAnimationFrame(loop);
 }
 
-//  Inicio 
+// ─── Inicio 
 record = 0;
-crearEstrellas(); // fondo inicial
-estado = 'intro'; // pantalla inicial
-loop();           // inicia el ciclo del juego
+crearEstrellas();
+estado = 'intro';
+loop();
