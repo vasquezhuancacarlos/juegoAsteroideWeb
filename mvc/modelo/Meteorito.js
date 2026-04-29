@@ -2,10 +2,6 @@ var ModeloMeteoritos = {
   lista:   [],
   COLORES: ['#a0522d', '#8b4513', '#cd853f', '#d2691e', '#b8860b'],
 
-  /**
-   * Crea un meteorito nuevo desde un borde aleatorio del canvas.
-   * Su dirección apunta aproximadamente al centro.
-   */
   crear: function(canvasW, canvasH, nivel) {
     var r         = 10 + Math.random() * 26;
     var velocidad = 1.4 + Math.random() * 2 + (nivel - 1) * 0.35;

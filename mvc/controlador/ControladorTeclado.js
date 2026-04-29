@@ -1,7 +1,6 @@
 var ControladorTeclado = {
   teclas: {},
 
-  /** Se llama una sola vez al arrancar */
   iniciar: function() {
     var self = this;
 
@@ -11,7 +10,7 @@ var ControladorTeclado = {
 
       // P → alternar pausa
       if (e.key === 'p' || e.key === 'P') {
-        if (EstadoJuego.estado === 'jugando')  EstadoJuego.estado = 'pausa';
+        if (EstadoJuego.estado === 'jugando')    EstadoJuego.estado = 'pausa';
         else if (EstadoJuego.estado === 'pausa') EstadoJuego.estado = 'jugando';
       }
 
@@ -28,7 +27,6 @@ var ControladorTeclado = {
     });
   },
 
-  /** Devuelve true si la tecla está presionada ahora mismo */
   estaPresionada: function(tecla) {
     return this.teclas[tecla] === true;
   }

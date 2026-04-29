@@ -1,7 +1,6 @@
 var ModeloEstrellas = {
   lista: [],
 
-  /** Genera un campo de estrellas aleatorio */
   generar: function(canvasW, canvasH, cantidad) {
     cantidad   = cantidad || 150;
     this.lista = [];
@@ -10,8 +9,8 @@ var ModeloEstrellas = {
         x:    Math.random() * canvasW,
         y:    Math.random() * canvasH,
         r:    Math.random() * 1.4,
-        a:    0.15 + Math.random() * 0.85, 
-        capa: Math.random()                
+        a:    0.15 + Math.random() * 0.85,
+        capa: Math.random()
       });
     }
   }
